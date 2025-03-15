@@ -24,6 +24,7 @@ import numpy as np
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer, ProcessorMixin
 
+from verl.utils.crypto_util import get_binary_content_from_file
 from verl.utils.model import compute_position_id_with_mask
 import verl.utils.torch_functional as verl_F
 
@@ -89,10 +90,12 @@ class RLHFDataset(Dataset):
                  chat_template_func=None,
                  return_raw_chat=False,
                  truncation='error',
+                 crypto_key=None,
                  filter_overlong_prompts=False):
         if not isinstance(parquet_files, (List, ListConfig)):
             parquet_files = [parquet_files]
 
+        self.crypto_key = crypto_key
         self.parquet_files = copy.deepcopy(parquet_files)
         self.original_parquet_files = copy.deepcopy(parquet_files)  # use for resume
         self.cache_dir = os.path.expanduser(cache_dir)
@@ -125,7 +128,12 @@ class RLHFDataset(Dataset):
         dataframes = []
         for parquet_file in self.parquet_files:
             # read parquet files and cache
-            dataframe = pd.read_parquet(parquet_file)
+            if self.crypto_key:
+                buffer_reader = get_binary_content_from_file(parquet_file, self.crypto_key)
+                dataframe = pd.read_parquet(buffer_reader)
+            else:
+                dataframe = pd.read_parquet(parquet_file)
+
             dataframes.append(dataframe)
         self.dataframe = pd.concat(dataframes)
 
