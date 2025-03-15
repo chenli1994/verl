@@ -8,11 +8,14 @@ import struct
 from Crypto.Cipher import AES
 import os
 import argparse
+import string
+import secrets
 
 try:
     from Crypto.Util.Padding import pad, unpad
 except ImportError:
     from Crypto.Util.py3compat import bchr, bord
+
 
     def pad(data_to_pad, block_size):
         """PKCS#7 填充实现"""
@@ -20,6 +23,7 @@ except ImportError:
         padding = bchr(padding_len) * padding_len
 
         return data_to_pad + padding
+
 
     def unpad(padded_data, block_size):
         """去掉 PKCS#7 填充"""
@@ -33,6 +37,19 @@ except ImportError:
             raise ValueError("PKCS#7 padding is incorrect.")
 
         return padded_data[:-padding_len]
+
+
+def generate_random_string(length=16):
+    """
+    desc:
+        生成一个 16 个字符的密钥
+    param(s):
+        - length (int): 密钥长度，默认为 16
+    return(s):
+        - str: 生成的随机密钥
+    """
+    characters = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(characters) for _ in range(length))
 
 
 def get_binary_content_from_file(in_filename, key, chunksize=64 * 1024):
@@ -65,7 +82,7 @@ def get_binary_content_from_file(in_filename, key, chunksize=64 * 1024):
     return chunk_per_file
 
 
-def encrypt_file(key, file_path, chunksize=64 * 1024):
+def encrypt_file(file_path, chunksize=64 * 1024):
     """
     desc:
         使用 AES-CBC 加密 JSON 和 JSONL 文件，并在原文件名的主干部分添加 `_enc`，保留后缀
@@ -75,8 +92,14 @@ def encrypt_file(key, file_path, chunksize=64 * 1024):
     """
     out_file_path = f"{file_path}.enc"
 
+    key = generate_random_string()
+    print(f"请记住密钥: {key}, 解密时需要")
+    assert len(key) == 16
+
+    key_encode = key.encode('utf-8')
+
     iv = os.urandom(16)
-    encryptor = AES.new(key, AES.MODE_CBC, iv)
+    encryptor = AES.new(key_encode, AES.MODE_CBC, iv)
     filesize = os.path.getsize(file_path)
 
     with open(file_path, 'rb') as infile, open(out_file_path, 'wb') as outfile:
@@ -98,9 +121,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--file_path', required=True,
                         help='Path to encode.')
-    parser.add_argument('--key', required=True,
-                        help='密钥')
 
     args = parser.parse_args()
 
-    encrypt_file(args.key, args.file_path)
+    encrypt_file(args.file_path)
