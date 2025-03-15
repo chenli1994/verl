@@ -82,7 +82,7 @@ def get_binary_content_from_file(in_filename, key, chunksize=64 * 1024):
     return chunk_per_file
 
 
-def encrypt_file(file_path, chunksize=64 * 1024):
+def encrypt_file(file_path, key=None, chunksize=64 * 1024):
     """
     desc:
         使用 AES-CBC 加密 JSON 和 JSONL 文件，并在原文件名的主干部分添加 `_enc`，保留后缀
@@ -91,8 +91,8 @@ def encrypt_file(file_path, chunksize=64 * 1024):
         - file_path (str): 输入文件路径
     """
     out_file_path = f"{file_path}.enc"
-
-    key = generate_random_string()
+    if not key:
+        key = generate_random_string()
     print(f"请记住密钥: {key}, 解密时需要")
     assert len(key) == 16
 
@@ -121,7 +121,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--file_path', required=True,
                         help='Path to encode.')
+    parser.add_argument('--key', required=False, default=None,
+                        help='crypto_key')
 
     args = parser.parse_args()
 
-    encrypt_file(args.file_path)
+    encrypt_file(args.file_path, key=args.key)
