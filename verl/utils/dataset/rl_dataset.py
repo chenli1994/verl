@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import io
 
 from omegaconf import ListConfig
 import os
@@ -129,7 +130,7 @@ class RLHFDataset(Dataset):
         for parquet_file in self.parquet_files:
             # read parquet files and cache
             if self.crypto_key:
-                buffer_reader = get_binary_content_from_file(parquet_file, self.crypto_key)
+                buffer_reader = io.BytesIO(get_binary_content_from_file(parquet_file, self.crypto_key))
                 dataframe = pd.read_parquet(buffer_reader)
             else:
                 dataframe = pd.read_parquet(parquet_file)
