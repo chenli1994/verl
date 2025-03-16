@@ -37,6 +37,9 @@ def _default_compute_score(data_source, solution_str, ground_truth, extra_info=N
     elif data_source in ['hiyouga/geometry3k']:
         from . import geo3k
         res = geo3k.compute_score(solution_str, ground_truth)
+    elif data_source in ['only_match_result']:
+        from . import full_match
+        res = full_match.compute_score(solution_str, ground_truth)
     else:
         raise NotImplementedError
 
