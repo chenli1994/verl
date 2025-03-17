@@ -18,6 +18,9 @@ import ray
 import numpy as np
 import hydra
 import os
+import io
+
+from verl.utils.crypto_util import get_binary_content_from_file
 
 os.environ['NCCL_DEBUG'] = 'WARN'
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'
@@ -64,7 +67,11 @@ def main_task(config):
         assert config.data.n_samples == 1, 'When temperature=0, n_samples must be 1.'
 
     # read dataset. Note that the dataset should directly contain chat template format (e.g., a list of dictionary)
-    dataset = pd.read_parquet(config.data.path)
+    if config.data.crypto_key:
+        buffer_reader = io.BytesIO(get_binary_content_from_file(config.data.path, config.data.crypto_key))
+        dataset = pd.read_parquet(buffer_reader)
+    else:
+        dataset = pd.read_parquet(config.data.path)
     chat_lst = dataset[config.data.prompt_key].tolist()
 
     chat_lst = [chat.tolist() for chat in chat_lst]
