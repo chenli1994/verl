@@ -1,5 +1,6 @@
 data:
   tokenizer: null
+  crypto_key: null
   train_files: ~/data/rlhf/gsm8k/train.parquet
   val_files: ~/data/rlhf/gsm8k/test.parquet
   prompt_key: prompt
